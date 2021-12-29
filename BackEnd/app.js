@@ -10,11 +10,16 @@ app.use(express.json());
 // Get one employee
 app.get("/api/employees/:id", (req, res) => {
 	// look up Id
-	res.json(getObjectById(req.params.id));
+	res.json(getEmployeeById(req.params.id));
+});
+// Update employee
+app.put("/api/employees/:id", (req, res) => {
+	updateEmployeeById(req.params.id, req.body);
+	res.json(database.employees);
 });
 // Delete employee
 app.delete("/api/employees/:id", (req, res) => {
-	removeObjectById(req.params.id);
+	removeEmployeeById(req.params.id);
 	res.json(database.employees);
 });
 
@@ -28,8 +33,9 @@ app.post("/api/employees", (req, res) => {
 	console.log(req.body);
 	const record = { ...req.body };
 	record.id = generateID();
+	console.log(record);
 	database.employees.push(record);
-	res.json(record);
+	res.json(database.employees);
 });
 
 app.listen(3000, () => {
@@ -67,18 +73,26 @@ const database = {
 	],
 };
 
-function getObjectById(id) {
+function getEmployeeById(id) {
 	const obj = database.employees.find((emp) => emp.id == id);
 	return obj ? obj : null;
 }
-function removeObjectById(id) {
-	const obj = getObjectById(id);
+function removeEmployeeById(id) {
+	const obj = getEmployeeById(id);
 	if (obj) {
 		const index = database.employees.indexOf(obj);
 		database.employees.splice(index, 1);
 	}
 }
-function insertObject(record) {
+function updateEmployeeById(id, employee) {
+	const obj = getEmployeeById(id);
+	if (obj) {
+		const index = database.employees.indexOf(obj);
+		database.employees[index] = employee;
+	}
+}
+
+function insertEmployee(record) {
 	const id = generateID();
 	record.id = generateID();
 	database.employees.push(record);

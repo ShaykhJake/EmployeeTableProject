@@ -67,13 +67,23 @@ const database = {
 	],
 };
 
-function renderButtons(employee) {
+function renderActions(target, employee) {
+	const td = document.createElement("td");
+	td.classList.add("action-cell");
+	const editButton = document.createElement("button");
+	editButton.innerHTML = "Edit";
+	editButton.addEventListener("click", () => {
+		renderNewRecordDiv(employee);
+	});
+	td.appendChild(editButton);
+
 	const deleteButton = document.createElement("button");
 	deleteButton.innerHTML = "Delete";
 	deleteButton.addEventListener("click", () => {
 		deleteEmployee(employee);
 	});
-	return deleteButton;
+	td.appendChild(deleteButton);
+	target.appendChild(td);
 }
 
 function deleteEmployee(employee) {
@@ -109,13 +119,22 @@ function createRecord(package) {
 	})
 		.then((res) => res.json())
 		.then((data) => {
-			employees.push(data);
+			employees = data;
 			renderEmployeeTable();
+			newRecordDiv.innerHTML = ``;
+			newRecordDiv.style.display = "none";
+			return true;
 		})
 		.catch((error) => {
 			console.log(error);
+			return false;
 		});
 }
+/**
+ * Retrieves an employee record; this function
+ * is currently redundant and unnecessary
+ * @param {String} target employee id
+ */
 function retrieveRecord(target) {
 	fetch(`${endpoint}/${target}`)
 		.then((res) => res.json())
@@ -135,9 +154,16 @@ function updateRecord(target, package) {
 		},
 	})
 		.then((res) => res.json())
-		.then((data) => console.log(data))
+		.then((data) => {
+			employees = data;
+			renderEmployeeTable();
+			newRecordDiv.innerHTML = ``;
+			newRecordDiv.style.display = "none";
+			return true;
+		})
 		.catch((error) => {
 			console.log(error);
+			return false;
 		});
 }
 function deleteRecord(target) {
@@ -232,44 +258,50 @@ function renderEmployeeTable() {
 	const createButton = document.createElement("button");
 	createButton.innerHTML = "Create New";
 	tableDiv.appendChild(createButton);
-	createButton.addEventListener("click", renderNewRecordDiv);
+	createButton.addEventListener("click", () => {
+		renderNewRecordDiv();
+	});
 }
 
 function renderEmployeeRow(employee) {
 	const tr = document.createElement("tr");
 	tr.innerHTML = `
-    <td><input id="fname3" type="text" value="${employee.firstName}"></td>
-    <td><input id="lname3" type="text" value="${employee.lastName}"></td>
-    <td><input id="hdate3" type="text" value="${employee.hireDate}"></td>
-    <td><input id="role3" type="text" value="${employee.role}"></td>
-    <td><input id="role3" type="text" value="${employee.id}"></td>
+    <td>${employee.firstName}</td>
+    <td>${employee.lastName}</td>
+    <td>${employee.hireDate}</td>
+    <td>${employee.role}</td>
+    <td>${employee.id}</td>
   `;
-	tr.appendChild(renderButtons(employee));
+	renderActions(tr, employee);
+	// tr.appendChild(renderButtons(employee));
 	return tr;
-}
-/**
- * Ensure's hiring date is in the past
- * @param {String} dateString
- * @returns boolean
- */
-function beforeNow(dateString) {
-	return new Date(dateString) < new Date() ? true : false;
 }
 
 /**
  * Build the contents of a div element for creating
  * a new employee record
+ * @param {object} employee (Optional parameter for updating)
  */
-function renderNewRecordDiv() {
+function renderNewRecordDiv(
+	employee = {
+		firstName: "",
+		lastName: "",
+		hireDate: "",
+		role: "Lackey",
+	}
+) {
+	//
+	let editMode = employee.id ? true : false;
+
 	// Inject HTML
 	newRecordDiv.innerHTML = `
-  <h2>Create a New Employee Record</h2>
+  <h2>${editMode ? "Update" : "Create a New"} Employee Record</h2>
   <form id="new-record-form">
     <label for="fname">First Name:</label>
     <input
       id="new-fname"
       type="text"
-      value=""
+      value="${employee.firstName}"
       placeholder="First Name"
     />
 
@@ -277,7 +309,7 @@ function renderNewRecordDiv() {
     <input
       id="new-lname"
       type="text"
-      value=""
+      value="${employee.lastName}"
       placeholder="Last Name"
     />
 
@@ -285,7 +317,7 @@ function renderNewRecordDiv() {
     <input
       id="new-hdate"
       type="text"
-      value=""
+      value="${employee.hireDate}"
       placeholder="YYYY-MM-DD"
     />
 
@@ -296,10 +328,22 @@ function renderNewRecordDiv() {
       <option value="Manager">Manager</option>
       <option value="Lackey" selected>Lackey</option>
     </select>
+
+    <label for="id">ID:</label>
+    <input
+      id="new-hdate"
+      disabled
+      type="text"
+      value="${employee.id ? employee.id : "(not yet assigned)"}"
+    />
+
   </form>  
   <button id="submit-new-button">Submit</button>
   <button id="cancel-new-button">Cancel</button>
   `;
+
+	document.getElementById("new-role").value = employee.role;
+
 	// Grab the cancel button
 	const cancelButton = document.getElementById("cancel-new-button");
 	// Add a click listener
@@ -328,9 +372,9 @@ function renderNewRecordDiv() {
 
 		// Validate the form contents using regular expressions
 		if (
-			validateTextInput(fname, /^[a-zA-Z].\D*$/) &&
-			validateTextInput(lname, /^[a-zA-Z].\D*$/) &&
-			validateTextInput(hdate, /\d{4}-\d{2}-\d{2}/)
+			validateNameInput(fname, /^[a-zA-Z].\D*$/) &&
+			validateNameInput(lname, /^[a-zA-Z].\D*$/) &&
+			validateDateInput(hdate)
 		) {
 			// build the package object (ID is added server-side)
 			let package = {
@@ -338,21 +382,17 @@ function renderNewRecordDiv() {
 				lastName: lname.value,
 				hireDate: hdate.value,
 				role: role.value,
+				id: employee.id ? employee.id : null,
 			};
 			// Submit the package to the REST API
-			createRecord(package);
+			if (editMode) {
+				console.log("HI!");
+				updateRecord(employee.id, package);
+			} else {
+				console.log(package);
+				createRecord(package);
+			}
 		} else {
-			// // If validation failed, add event listeners to each field
-			// // for real-time validation
-			// fname.addEventListener("input", () => {
-			// 	validateTextInput(fname, /[A-Z]+/);
-			// });
-			// lname.addEventListener("input", () => {
-			// 	validateTextInput(lname, /[A-Z]+/);
-			// });
-			// hdate.addEventListener("input", () => {
-			// 	validateTextInput(hdate, /\d{4}-\d{2}-\d{2}/);
-			// });
 			return;
 		}
 	});
@@ -360,16 +400,43 @@ function renderNewRecordDiv() {
 	newRecordDiv.style.display = "block";
 }
 
-function validateTextInput(target, regex) {
+function validateNameInput(target, regex) {
 	const inputText = target.value;
 	if (regex.test(inputText)) {
 		target.classList.remove("error");
 		return true;
 	} else {
 		target.addEventListener("input", () => {
-			validateTextInput(target, regex);
+			validateNameInput(target, regex);
 		});
 		target.classList.add("error");
 		return false;
 	}
+}
+/**
+ *
+ * @param {object} target html element
+ * @returns boolean true if valid
+ */
+function validateDateInput(target) {
+	let regex = /\d{4}-\d{2}-\d{2}/;
+	const dateString = target.value;
+	if (regex.test(dateString) && new Date(dateString) < new Date()) {
+		target.classList.remove("error");
+		return true;
+	} else {
+		target.addEventListener("input", () => {
+			validateDateInput(target);
+		});
+		target.classList.add("error");
+		return false;
+	}
+}
+/**
+ * Ensure's date is in the past
+ * @param {String} dateString
+ * @returns boolean true if valid
+ */
+function beforeNow(dateString) {
+	return new Date(dateString) < new Date();
 }
