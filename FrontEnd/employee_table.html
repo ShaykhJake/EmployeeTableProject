@@ -1,12 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>IBM Coding Challenge: Employee Table</title>
 		<link rel="stylesheet" href="style.css" />
 		<link rel="icon" href="//www.ibm.com/favicon.ico" />
 		<style>
 			@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap");
 		</style>
+		<script
+			src="https://kit.fontawesome.com/ed98db752b.js"
+			crossorigin="anonymous"
+		></script>
 	</head>
 	<body>
 		<div class="navbar">
@@ -36,52 +43,15 @@
 				<input
 					type="text"
 					id="search-box"
-					placeholder="Search for names.."
+					placeholder="Filter results..."
 				/>
-				<button id="clear-search" class="warning">Clear</button>
+				<button id="clear-search" class="warning">
+					<i class="fas fa-undo-alt"></i>
+				</button>
 			</div>
 
 			<div class="table-div" id="table-div"></div>
 			<div class="new-record-div" id="new-record-div"></div>
-
-			<!-- <form>
-<table style="width:100%">
-  <tr>
-    <td></td>
-    <th>First Name</th>
-    <th>Last Name</th>
-    <th>Hire Date</th>
-    <th>Role</th>
-    <th>ID</th>
-  </tr>
-  <tr>
-    <td><input id="fname1" type="text" value="Alfred"></td>
-    <td><input id="lname1" type="text" value="Hong"></td>
-    <td><input id="hdate1" type="text" value="2012-12-12"></td>
-    <td><input id="role1" type="text" value="Manager"></td>
-    <td>1</td>
-    <td><button>Delete</button></td>
-  </tr>
-  <tr>
-    <td><input id="fname2" type="text" value="Maria"></td>
-    <td><input id="lname2" type="text" value="Fuentes"></td>
-    <td><input id="hdate2" type="text" value="2005-09-10"></td>
-    <td><input id="role2" type="text" value="CEO"></td>
-    <td>2</td>
-    <td><button>Delete</button></td>
-  </tr>
-  <tr>
-    <td><input id="fname3" type="text" value="Tom"></td>
-    <td><input id="lname3" type="text" value="Smith"></td>
-    <td><input id="hdate3" type="text" value="2001-03-05"></td>
-    <td><input id="role3" type="text" value="VP"></td>
-    <td>3</td>
-    <td><button>Delete</button></td>
-  </tr>
-</table>
-<button>Submit Changes</button>
-<button>New Record</button>
-</form> -->
 		</div>
 	</body>
 	<script src="script.js">

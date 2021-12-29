@@ -1,48 +1,50 @@
 /**
- * TODOS:
- *
- * Get DOM Elements
- *
- * Animate Deletion:
- *
- * Spinner for Loading:
- *
- * Helpers & Modals:
- * - Confirm Delete
- *
- * REST API
- * Create
- * Retrieve
- * Update
- * Delate
+ * designed by, ShaykhJake, (c)2021
+ * Note: this Vanilla JS SPA was written in response to an IBM coding
+ * challenge to create a simple, full-stack employee table/database.
  */
 
-// Get DOM elements
+// Get Static DOM elements
 const tableDiv = document.getElementById("table-div");
 const newRecordDiv = document.getElementById("new-record-div");
 const searchBox = document.getElementById("search-box");
 const clearSearchButton = document.getElementById("clear-search");
 
-// Global variables
-let employees = [];
-let filtered = false;
+// Initialize Global variables
+let employees = []; // Array of employee objects
+let filtered = false; // is the array filtered by search string?
+// Object to hold various pagination settings
 const pagination = {
-	step: 3,
+	step: 5,
 	current: 0,
 	currentLength: 0,
 };
+// Object to hold various sorting settings
+const sorting = {
+	sorted: false,
+	sortDirection: 1,
+	sortKey: "firstName",
+};
 
-// Initial methods after script is loaded
+// Call initial functions after page is loaded
 window.onload = () => {
+	// Database call to retrieve all records
 	retrieveAll();
+	// Activate the search/filter box with event listener
 	searchBox.addEventListener("keyup", () => {
+		// reset pagination start
 		pagination.current = 0;
+		// re-render table of employees
 		renderEmployeeTable();
 	});
 	clearSearchButton.addEventListener("click", clearSearch);
-	// renderEmployeeTable();
 };
 
+/**
+ * Filters the Array of employee objects based on what is in the search box
+ * @param {Array} elements (employee objects)
+ * @returns Array of filtered elements
+ */
 function updateSearchFilter(elements) {
 	let searchText = searchBox.value.toLowerCase();
 	if (searchText.length < 1) {
@@ -64,54 +66,25 @@ function updateSearchFilter(elements) {
 	}
 }
 
+/**
+ * Clears the search box and re-renders employee table
+ */
 function clearSearch() {
 	searchBox.value = "";
 	renderEmployeeTable();
 }
 
 /**
- * Poor man's enum for controlling possible roles
+ * Add a pair of action buttons to the end of an employee row
+ * @param {Object} target html element
+ * @param {Object} employee
  */
-const roles = {
-	CEO: "CEO",
-	VP: "VP",
-	Manager: "Manager",
-	Lackey: "Lackey",
-};
-
-/**
- * Initial information for the database for testing; once fully active, this is unecessary;
- * it should ultimately be moved to the main node script
- */
-const database = {
-	employees: [
-		{
-			firstName: "Alfred",
-			lastName: "Hong",
-			hireDate: "2012-12-12",
-			role: "Manager",
-		},
-		{
-			firstName: "Maria",
-			lastName: "Fuentes",
-			hireDate: "2005-09-10",
-			role: "CEO",
-		},
-		{
-			firstName: "Tom",
-			lastName: "Smith",
-			hireDate: "2001-03-05",
-			role: "VP",
-		},
-	],
-};
-
 function renderActions(target, employee) {
 	const td = document.createElement("td");
 	td.classList.add("action-cell");
 	const editButton = document.createElement("button");
 	editButton.classList.add("edit");
-	editButton.innerHTML = "Edit";
+	editButton.innerHTML = `Edit <i class="fas fa-user-edit"></i>`;
 	editButton.addEventListener("click", () => {
 		renderNewRecordDiv(employee);
 	});
@@ -119,7 +92,7 @@ function renderActions(target, employee) {
 
 	const deleteButton = document.createElement("button");
 	deleteButton.classList.add("warning");
-	deleteButton.innerHTML = "Delete";
+	deleteButton.innerHTML = `Delete <i class="fas fa-trash-alt"></i>`;
 	deleteButton.addEventListener("click", () => {
 		deleteEmployee(employee);
 	});
@@ -127,16 +100,24 @@ function renderActions(target, employee) {
 	target.appendChild(td);
 }
 
+/**
+ * Simple confirmation for deleting an employee
+ * @param {Object} employee
+ */
 function deleteEmployee(employee) {
 	if (confirm(`Do you really want to delete ${employee.firstName}?`)) {
-		// deleteRecord(employee);
+		// Go forward with API call to delete the record
 		deleteRecord(employee.id);
-		// removeObjectFromArray(employees, employee);
 	}
 }
 
 // CRUD Functions
+// Initialize base endpoint
 const endpoint = "http://localhost:3000/api/employees";
+
+/**
+ * Retrieve all database records
+ */
 function retrieveAll() {
 	fetch(endpoint)
 		.then((res) => res.json())
@@ -149,6 +130,10 @@ function retrieveAll() {
 			employees = [];
 		});
 }
+/**
+ * Submits a creation (post) request to the database
+ * @param {Object} package of employee attributes
+ */
 function createRecord(package) {
 	fetch(endpoint, {
 		method: "POST",
@@ -185,6 +170,11 @@ function retrieveRecord(target) {
 			console.log(error);
 		});
 }
+/**
+ * Sends a PUT request to update an employee's record
+ * @param {String} target id of employee
+ * @param {Object} package new attributes for employee
+ */
 function updateRecord(target, package) {
 	fetch(`${endpoint}/${target}`, {
 		method: "PUT",
@@ -206,6 +196,10 @@ function updateRecord(target, package) {
 			return false;
 		});
 }
+/**
+ * Sends a DELETE request to the database
+ * @param {String} target employee id
+ */
 function deleteRecord(target) {
 	fetch(`${endpoint}/${target}`, {
 		method: "DELETE",
@@ -220,40 +214,69 @@ function deleteRecord(target) {
 		});
 }
 
-function removeObjectFromArray(array, object) {
-	const index = array.indexOf(object);
-	array.splice(index, 1);
-	renderEmployeeTable();
-}
-
 /**
- *
- * @param {DOM element object} targetDiv
- * @param {array of objects} employees
+ * Main logic for rendering the employee table
+ * @param {Object} targetDiv DOM element where table will be rendered
+ * @param {Array} employees objects
  */
 function renderEmployeeTable() {
-	setTimeout(() => {
-		console.log("hello");
-	}, 5000);
-	const elements = updateSearchFilter(employees);
+	let elements = updateSearchFilter(employees);
+	sortElements(elements);
+
 	tableDiv.innerHTML = `
   Total ${filtered ? "<b>Filtered</b> " : ""}Records: ${elements.length}
   `;
 	const table = document.createElement("table");
 	table.classList.add("employee-table");
+	table.innerHTML = `
+  <colgroup>
+    <col span="1" style="width: 5%;">
+    <col span="1" style="width: 15%;">
+    <col span="1" style="width: 15%;">
+    <col span="1" style="width: 12%;">
+    <col span="1" style="width: 12%;">
+    <col span="1" style="width: 20%;">
+    <col span="1" style="width: 21%;">
+  </colgroup>
+  `;
 	// Add attributes to the table
 	tableDiv.appendChild(table);
 	const headerRow = document.createElement("tr");
 	headerRow.innerHTML = `
     <td></td>
-    <th>First Name</th>
-    <th>Last Name</th>
-    <th>Hire Date</th>
-    <th>Role</th>
-    <th>ID</th>
+    <th id="fname-header" class="sortable" data-key="firstName">First Name</th>
+    <th id="lname-header" class="sortable" data-key="lastName">Last Name</th>
+    <th id="hdate-header" class="sortable" data-key="hireDate">Hire Date</th>
+    <th id="role-header" class="sortable" data-key="role">Role</th>
+    <th id="id-header" class="sortable" data-key="id">ID</th>
     <th>Actions</th>
   `;
+
 	table.appendChild(headerRow);
+
+	const fNameHeader = document.getElementById("fname-header");
+	fNameHeader.addEventListener("click", () => {
+		changeSort(fNameHeader);
+	});
+	const lNameHeader = document.getElementById("lname-header");
+	lNameHeader.addEventListener("click", () => {
+		changeSort(lNameHeader);
+	});
+	const hDateHeader = document.getElementById("hdate-header");
+	hDateHeader.addEventListener("click", () => {
+		changeSort(hDateHeader);
+	});
+	const roleHeader = document.getElementById("role-header");
+	roleHeader.addEventListener("click", () => {
+		changeSort(roleHeader);
+	});
+	const idHeader = document.getElementById("id-header");
+	idHeader.addEventListener("click", () => {
+		changeSort(idHeader);
+	});
+
+	highlightSort();
+
 	let start = pagination.current;
 	let end = 0;
 	if (elements.length > 0) {
@@ -276,14 +299,20 @@ function renderEmployeeTable() {
 	renderPaginationBar(start, end, elements);
 
 	const createButton = document.createElement("button");
-	createButton.innerHTML = "Create New";
-	createButton.classList.add("confirm");
+	createButton.innerHTML = `Create New <i class="fas fa-user-plus"></i>`;
+	createButton.classList.add("edit");
 	tableDiv.appendChild(createButton);
 	createButton.addEventListener("click", () => {
 		renderNewRecordDiv();
 	});
 }
 
+/**
+ * Renders out the information for each employee row
+ * @param {number} index of array element
+ * @param {Object} employee
+ * @returns
+ */
 function renderEmployeeRow(index, employee) {
 	const tr = document.createElement("tr");
 	tr.innerHTML = `
@@ -317,6 +346,9 @@ function renderNewRecordDiv(
 	// Inject HTML
 	newRecordDiv.innerHTML = `
   <h2>${editMode ? "Update" : "Create a New"} Employee Record</h2>
+  <h3 class="mute">Employee ID: ${
+		editMode ? employee.id : "(not yet assigned)"
+  }</h3>
   <form id="new-record-form">
     <label for="fname">First Name:</label>
     <input
@@ -350,17 +382,9 @@ function renderNewRecordDiv(
       <option value="Lackey" selected>Lackey</option>
     </select>
 
-    <label for="id">ID:</label>
-    <input
-      id="new-hdate"
-      disabled
-      type="text"
-      value="${employee.id ? employee.id : "(not yet assigned)"}"
-    />
-
   </form>  
-  <button id="submit-new-button" class="confirm">Submit</button>
-  <button id="cancel-new-button" class="warning">Cancel</button>
+  <button id="submit-new-button" class="confirm">Submit <i class="fas fa-check"></i></button>
+  <button id="cancel-new-button" class="warning">Cancel <i class="fas fa-times"></i></button>
   `;
 
 	document.getElementById("new-role").value = employee.role;
@@ -414,6 +438,12 @@ function renderNewRecordDiv(
 	newRecordDiv.style.display = "block";
 }
 
+/**
+ * Validates the input of a name field
+ * @param {Object} target DOM element
+ * @param {RegExp} regex expression for matching
+ * @returns true if valid; false if not valid;
+ */
 function validateNameInput(target, regex) {
 	const inputText = target.value;
 	if (regex.test(inputText)) {
@@ -428,7 +458,7 @@ function validateNameInput(target, regex) {
 	}
 }
 /**
- *
+ * Validates the date input
  * @param {object} target html element
  * @returns boolean true if valid
  */
@@ -446,6 +476,7 @@ function validateDateInput(target) {
 		return false;
 	}
 }
+
 /**
  * Ensure's date is in the past
  * @param {String} dateString
@@ -455,6 +486,12 @@ function beforeNow(dateString) {
 	return new Date(dateString) < new Date();
 }
 
+/**
+ * Renders a bar for pagination
+ * @param {number} start index for range
+ * @param {number} end index for range (exclusive)
+ * @param {Array} elements
+ */
 function renderPaginationBar(start, end, elements) {
 	const pagiBar = document.createElement("div");
 	pagiBar.classList.add("pagi-bar");
@@ -462,11 +499,11 @@ function renderPaginationBar(start, end, elements) {
 	let plural = end - start > 1;
 
 	pagiBar.innerHTML = `
-    <button id="prev-button"><< Previous</button>
+    <button id="prev-button"><i class="fas fa-arrow-left"></i> Previous</button>
     Record${plural ? "s" : ""} ${start + 1}${plural ? " - " + end : ""} of ${
 		elements.length
 	}
-    <button id="next-button">Next >></button>
+    <button id="next-button">Next <i class="fas fa-arrow-right"></i></button>
 
   `;
 	const prevButton = document.getElementById("prev-button");
@@ -501,4 +538,58 @@ function shiftPage(direction, elements) {
 		pagination.current = 0;
 	}
 	renderEmployeeTable();
+}
+
+/**
+ * Sorts the elements of an array based on the attributes
+ * of the global "sorting" object
+ * @param {Array} elements
+ * @returns array
+ */
+function sortElements(elements) {
+	const key = sorting.sortKey;
+	const direction = sorting.sortDirection;
+	sorting.sorted = true;
+
+	elements.sort((a, b) => {
+		if (a[key].toLowerCase() < b[key].toLowerCase()) {
+			return -1 * direction;
+		}
+		if (a[key] > b[key]) {
+			return 1 * direction;
+		}
+		return 0;
+	});
+	return elements;
+}
+
+/**
+ * Changing the attributes of the global "sorting" object
+ * @param {String} key attribute to sort on
+ * @param {Object} header DOM element calling for the sorting
+ */
+function changeSort(header) {
+	const key = header.dataset.key;
+	if (sorting.sortKey == key) {
+		sorting.sortDirection *= -1;
+	} else {
+		sorting.sortKey = key;
+		sorting.sortDirection = 1;
+	}
+	renderEmployeeTable();
+}
+
+/**
+ * Iterates over header rows to style them based on which row
+ * is the active sorting row
+ */
+function highlightSort() {
+	const headers = document.getElementsByClassName("sortable");
+	for (const header of headers) {
+		if (header.dataset.key == sorting.sortKey) {
+			const dir = sorting.sortDirection > 0 ? "down" : "up";
+			header.classList.add("sorted");
+			header.innerHTML += ` <i class="fas fa-arrow-${dir}"></i>`;
+		}
+	}
 }
