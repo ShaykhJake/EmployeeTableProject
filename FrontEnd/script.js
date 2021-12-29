@@ -342,8 +342,8 @@ function renderNewRecordDiv(
 ) {
 	//
 	let editMode = employee.id ? true : false;
-
 	// Inject HTML
+	newRecordDiv.style.animation = "fade-in 0.2s ease-in";
 	newRecordDiv.innerHTML = `
   <h2>${editMode ? "Update" : "Create a New"} Employee Record</h2>
   <h3 class="mute">Employee ID: ${
@@ -434,7 +434,6 @@ function renderNewRecordDiv(
 			return;
 		}
 	});
-
 	newRecordDiv.style.display = "block";
 }
 
