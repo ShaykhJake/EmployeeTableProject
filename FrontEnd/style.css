@@ -1,14 +1,8 @@
 /* 
-Todos:
-
-Styles for the overall body;
-Proper Table Styling
-
-Animations to Indicate Field Creation
-
-
+Style Sheet for "Employee Table Project"
 */
 
+/* Set color scheme variables */
 :root {
 	--base: #fff;
 	--base-text: #000;
@@ -69,9 +63,7 @@ body {
 	animation: fade-in 0.75s ease-in;
 }
 .container {
-	/* background-color: #fff; */
 	margin-top: 50px;
-	/* width: 90vw; */
 	margin: auto;
 	border-radius: 10px;
 	padding: 10px;
@@ -120,6 +112,10 @@ input {
 	background-color: var(--surface-accent);
 	color: var(--base-text);
 	box-shadow: 5px 5px 5px 2px rgba(0, 0, 0, 0.2);
+	animation: fade-in 0.2s ease-in;
+}
+.fade-out {
+	animation: fade-out 0.2s ease-out;
 }
 input,
 select {
@@ -205,6 +201,14 @@ button.edit:hover {
 	color: #666666;
 	font-weight: lighter;
 }
+.sortable {
+	cursor: pointer;
+	color: var(--button);
+}
+.sorted {
+	font-style: italic;
+	color: var(--warning);
+}
 
 @media only screen and (max-width: 500px) {
 	button {
@@ -214,15 +218,5 @@ button.edit:hover {
 	}
 	table {
 		font-size: 4.5vw;
-		display: block;
 	}
-}
-
-.sortable {
-	cursor: pointer;
-	color: var(--button);
-}
-.sorted {
-	font-style: italic;
-	color: var(--warning);
 }
