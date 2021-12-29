@@ -8,13 +8,6 @@
 			@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap");
 		</style>
 	</head>
-	<style>
-		table,
-		th,
-		td {
-			border: 1px solid black;
-		}
-	</style>
 	<body>
 		<div class="navbar">
 			<div class="bx--header__logo">
@@ -39,12 +32,22 @@
 		</div>
 		<div class="container">
 			<h1>Employee Table</h1>
+			<div class="search-div">
+				<input
+					type="text"
+					id="search-box"
+					placeholder="Search for names.."
+				/>
+				<button id="clear-search" class="warning">Clear</button>
+			</div>
+
 			<div class="table-div" id="table-div"></div>
 			<div class="new-record-div" id="new-record-div"></div>
 
 			<!-- <form>
 <table style="width:100%">
   <tr>
+    <td></td>
     <th>First Name</th>
     <th>Last Name</th>
     <th>Hire Date</th>

@@ -20,15 +20,54 @@
 // Get DOM elements
 const tableDiv = document.getElementById("table-div");
 const newRecordDiv = document.getElementById("new-record-div");
+const searchBox = document.getElementById("search-box");
+const clearSearchButton = document.getElementById("clear-search");
 
 // Global variables
 let employees = [];
+let filtered = false;
+const pagination = {
+	step: 3,
+	current: 0,
+	currentLength: 0,
+};
 
 // Initial methods after script is loaded
 window.onload = () => {
 	retrieveAll();
+	searchBox.addEventListener("keyup", () => {
+		pagination.current = 0;
+		renderEmployeeTable();
+	});
+	clearSearchButton.addEventListener("click", clearSearch);
 	// renderEmployeeTable();
 };
+
+function updateSearchFilter(elements) {
+	let searchText = searchBox.value.toLowerCase();
+	if (searchText.length < 1) {
+		filtered = false;
+		return elements;
+	} else {
+		filteredElements = elements.filter((employee) => {
+			if (employee.firstName.toLowerCase().includes(searchText))
+				return true;
+			if (employee.lastName.toLowerCase().includes(searchText))
+				return true;
+			if (employee.hireDate.toLowerCase().includes(searchText))
+				return true;
+			if (employee.role.toLowerCase().includes(searchText)) return true;
+			if (employee.id.toLowerCase().includes(searchText)) return true;
+		});
+		filtered = true;
+		return filteredElements;
+	}
+}
+
+function clearSearch() {
+	searchBox.value = "";
+	renderEmployeeTable();
+}
 
 /**
  * Poor man's enum for controlling possible roles
@@ -71,6 +110,7 @@ function renderActions(target, employee) {
 	const td = document.createElement("td");
 	td.classList.add("action-cell");
 	const editButton = document.createElement("button");
+	editButton.classList.add("edit");
 	editButton.innerHTML = "Edit";
 	editButton.addEventListener("click", () => {
 		renderNewRecordDiv(employee);
@@ -78,6 +118,7 @@ function renderActions(target, employee) {
 	td.appendChild(editButton);
 
 	const deleteButton = document.createElement("button");
+	deleteButton.classList.add("warning");
 	deleteButton.innerHTML = "Delete";
 	deleteButton.addEventListener("click", () => {
 		deleteEmployee(employee);
@@ -109,7 +150,6 @@ function retrieveAll() {
 		});
 }
 function createRecord(package) {
-	console.log(package);
 	fetch(endpoint, {
 		method: "POST",
 		body: JSON.stringify(package),
@@ -186,56 +226,26 @@ function removeObjectFromArray(array, object) {
 	renderEmployeeTable();
 }
 
-// <form>
-// <table style="width:100%">
-//   <tr>
-//     <th>First Name</th>
-//     <th>Last Name</th>
-//     <th>Hire Date</th>
-//     <th>Role</th>
-//     <th>ID</th>
-//   </tr>
-//   <tr>
-//     <td><input id="fname1" type="text" value="Alfred"></td>
-//     <td><input id="lname1" type="text" value="Hong"></td>
-//     <td><input id="hdate1" type="text" value="2012-12-12"></td>
-//     <td><input id="role1" type="text" value="Manager"></td>
-//     <td>1</td>
-//     <td><button>Delete</button></td>
-//   </tr>
-//   <tr>
-//     <td><input id="fname2" type="text" value="Maria"></td>
-//     <td><input id="lname2" type="text" value="Fuentes"></td>
-//     <td><input id="hdate2" type="text" value="2005-09-10"></td>
-//     <td><input id="role2" type="text" value="CEO"></td>
-//     <td>2</td>
-//     <td><button>Delete</button></td>
-//   </tr>
-//   <tr>
-//     <td><input id="fname3" type="text" value="Tom"></td>
-//     <td><input id="lname3" type="text" value="Smith"></td>
-//     <td><input id="hdate3" type="text" value="2001-03-05"></td>
-//     <td><input id="role3" type="text" value="VP"></td>
-//     <td>3</td>
-//     <td><button>Delete</button></td>
-//   </tr>
-// </table>
-
-// renderEmployeeTable(tableDiv, database.employees);
-
 /**
  *
  * @param {DOM element object} targetDiv
  * @param {array of objects} employees
  */
 function renderEmployeeTable() {
-	tableDiv.innerHTML = "";
+	setTimeout(() => {
+		console.log("hello");
+	}, 5000);
+	const elements = updateSearchFilter(employees);
+	tableDiv.innerHTML = `
+  Total ${filtered ? "<b>Filtered</b> " : ""}Records: ${elements.length}
+  `;
 	const table = document.createElement("table");
 	table.classList.add("employee-table");
 	// Add attributes to the table
 	tableDiv.appendChild(table);
 	const headerRow = document.createElement("tr");
 	headerRow.innerHTML = `
+    <td></td>
     <th>First Name</th>
     <th>Last Name</th>
     <th>Hire Date</th>
@@ -244,28 +254,40 @@ function renderEmployeeTable() {
     <th>Actions</th>
   `;
 	table.appendChild(headerRow);
-	if (employees.length > 0) {
-		employees.forEach((employee) => {
-			console.log(employee);
-			table.appendChild(renderEmployeeRow(employee));
-		});
+	let start = pagination.current;
+	let end = 0;
+	if (elements.length > 0) {
+		if (start + pagination.step > elements.length) {
+			end = elements.length;
+		} else {
+			end = start + pagination.step;
+		}
+		for (let i = start; i < end; i++) {
+			table.appendChild(renderEmployeeRow(i, elements[i]));
+		}
+		// set current to either max or next index
+		pagination.next = true;
+		pagination.previous = true;
 	} else {
 		const tr = document.createElement("tr");
-		tr.innerHTML = `<td colspan="6">There are No Records in the Database</td>`;
+		tr.innerHTML = `<td colspan="7">There are No Matching Records</td>`;
 		table.appendChild(tr);
 	}
+	renderPaginationBar(start, end, elements);
 
 	const createButton = document.createElement("button");
 	createButton.innerHTML = "Create New";
+	createButton.classList.add("confirm");
 	tableDiv.appendChild(createButton);
 	createButton.addEventListener("click", () => {
 		renderNewRecordDiv();
 	});
 }
 
-function renderEmployeeRow(employee) {
+function renderEmployeeRow(index, employee) {
 	const tr = document.createElement("tr");
 	tr.innerHTML = `
+    <td>${index + 1}</td>
     <td>${employee.firstName}</td>
     <td>${employee.lastName}</td>
     <td>${employee.hireDate}</td>
@@ -273,7 +295,6 @@ function renderEmployeeRow(employee) {
     <td>${employee.id}</td>
   `;
 	renderActions(tr, employee);
-	// tr.appendChild(renderButtons(employee));
 	return tr;
 }
 
@@ -338,14 +359,15 @@ function renderNewRecordDiv(
     />
 
   </form>  
-  <button id="submit-new-button">Submit</button>
-  <button id="cancel-new-button">Cancel</button>
+  <button id="submit-new-button" class="confirm">Submit</button>
+  <button id="cancel-new-button" class="warning">Cancel</button>
   `;
 
 	document.getElementById("new-role").value = employee.role;
 
 	// Grab the cancel button
 	const cancelButton = document.getElementById("cancel-new-button");
+	cancelButton.classList.add("warning");
 	// Add a click listener
 	cancelButton.addEventListener("click", () => {
 		// Confirm that the user wants to cancel
@@ -362,6 +384,7 @@ function renderNewRecordDiv(
 	});
 	// Grab the submit button
 	const submitButton = document.getElementById("submit-new-button");
+
 	// Add submit event listener
 	submitButton.addEventListener("click", () => {
 		// Grab the input elements
@@ -386,10 +409,8 @@ function renderNewRecordDiv(
 			};
 			// Submit the package to the REST API
 			if (editMode) {
-				console.log("HI!");
 				updateRecord(employee.id, package);
 			} else {
-				console.log(package);
 				createRecord(package);
 			}
 		} else {
@@ -439,4 +460,52 @@ function validateDateInput(target) {
  */
 function beforeNow(dateString) {
 	return new Date(dateString) < new Date();
+}
+
+function renderPaginationBar(start, end, elements) {
+	const pagiBar = document.createElement("div");
+	pagiBar.classList.add("pagi-bar");
+	tableDiv.appendChild(pagiBar);
+	let plural = end - start > 1;
+
+	pagiBar.innerHTML = `
+    <button id="prev-button"><< Previous</button>
+    Record${plural ? "s" : ""} ${start + 1}${plural ? " - " + end : ""} of ${
+		elements.length
+	}
+    <button id="next-button">Next >></button>
+
+  `;
+	const prevButton = document.getElementById("prev-button");
+	prevButton.addEventListener("click", () => {
+		shiftPage(-1, elements);
+	});
+	if (start == 0) {
+		prevButton.style.display = "none";
+	}
+	const nextButton = document.getElementById("next-button");
+	nextButton.addEventListener("click", () => {
+		shiftPage(1, elements);
+	});
+	if (end >= elements.length) {
+		nextButton.style.display = "none";
+	}
+}
+
+/**
+ * Simple function to shift the current pagination index
+ * @param {integer} direction (-1 for previous, 1 for next)
+ * @param {array} elements of employee records
+ */
+function shiftPage(direction, elements) {
+	step = pagination.step * direction;
+	if (pagination.current + step > 0) {
+		if (pagination.current + step < elements.length) {
+			pagination.current = pagination.current + step;
+		}
+		// else leave .current alone
+	} else {
+		pagination.current = 0;
+	}
+	renderEmployeeTable();
 }
