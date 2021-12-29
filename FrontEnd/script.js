@@ -370,17 +370,10 @@ function renderNewRecordDiv(
 	cancelButton.classList.add("warning");
 	// Add a click listener
 	cancelButton.addEventListener("click", () => {
-		// Confirm that the user wants to cancel
-		if (
-			confirm(
-				"Are you sure you want to cancel? All changes will be lost."
-			)
-		) {
-			// Clear the contents of the div
-			newRecordDiv.innerHTML = "";
-			// Hide the div
-			newRecordDiv.style.display = "none";
-		}
+		// Clear the contents of the div
+		newRecordDiv.innerHTML = "";
+		// Hide the div
+		newRecordDiv.style.display = "none";
 	});
 	// Grab the submit button
 	const submitButton = document.getElementById("submit-new-button");
