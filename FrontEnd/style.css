@@ -3,7 +3,60 @@ Todos:
 
 Styles for the overall body;
 Proper Table Styling
+
 Animations to Indicate Field Creation
 
 
 */
+body {
+	position: relative;
+	background-color: #222;
+	padding-top: 25px;
+}
+.navbar {
+	position: fixed;
+	padding: 3px;
+	top: 0;
+	left: 0;
+	background-color: #fff;
+	width: 100%;
+}
+.container {
+	background-color: #fff;
+	margin-top: 50px;
+	width: 90vw;
+	margin: auto;
+	border-radius: 10px;
+	padding: 10px;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+}
+.employee-table {
+	table-layout: fixed;
+	width: 100%;
+}
+input {
+	width: 90%;
+}
+.new-record-div {
+	display: none;
+	margin-top: 20px;
+	padding: 10px;
+	border-radius: 10px;
+	background-color: #eee;
+}
+#new-record-form input,
+select {
+	display: block;
+	margin-bottom: 10px;
+}
+input.error {
+	background-color: #ffbbbb;
+}
+input.good {
+	background-color: #bbffbb;
+}
