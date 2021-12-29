@@ -18,6 +18,6 @@ Ideally this would be written with TypeScript and appropriately compiled for dep
 ## Installation
 
 1. Clone the repository from github
-2. Install BackEnd dependencies: from the BackEnd directory, "npm install"
+2. Install backend dependencies within the BackEnd directory: "npm install"
 3. Run the server from within the BackEnd directory: "node app.js"
 4. Load the employee_table.html from the FrontEnd directory into a brower
